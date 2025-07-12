@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.env/
+.venv/
+env/
+venv/
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Chainlit config cache (just to be safe)
+.chainlit/__pycache__/
+.chainlit/config.toml.bak
+
+# Python tools
+*.log
+*.sqlite3
+
+# VSCode or IDE config
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Zip files
+*.zip
