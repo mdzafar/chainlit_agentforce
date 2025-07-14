@@ -1,8 +1,6 @@
 import os
 import uuid
-import datetime
 import time
-import json
 import requests
 import chainlit as cl
 from dotenv import load_dotenv
@@ -14,8 +12,6 @@ AGENT_API_BASE_URL = os.getenv("AGENT_API_BASE_URL")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 AGENT_ID = os.getenv("AGENT_ID")
-#USERNAME = os.getenv("USERNAME")
-#PASSWORD = os.getenv("PASSWORD")
 
 # Generate a random UUID
 def generate_random_uuid():
@@ -29,24 +25,16 @@ def authenticate():
         'grant_type': 'client_credentials',
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET
-        #'username': USERNAME,
-        #'password': PASSWORD
     }
-    response = requests.post(f"{BASE_URL}/services/oauth2/token", data=payload)
-    if response.status_code == 200:
-        access_token = response.json().get("access_token")
-        return access_token
-    else:
+    try:
+        response = requests.post(f"{BASE_URL}/services/oauth2/token", data=payload)
+        response.raise_for_status()
+        return response.json().get("access_token")
+    except Exception as e:
+        print(f"Auth error: {e}")
         return None
     
-def start_session():
-    global global_session_id, global_access_token
-    access_token = authenticate();
-    if not access_token:
-        return "Authentication failed!"
-
-    global_access_token = access_token;
-
+def start_session(access_token):
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
@@ -62,18 +50,22 @@ def start_session():
         },
         "bypassUser": 'false'
     }
-    response = requests.post(f"{AGENT_API_BASE_URL}/agents/{AGENT_ID}/sessions", headers=headers, json=session_payload)
-    if response.status_code == 200:
-        session_id = response.json().get("sessionId")
-        global_session_id = session_id;
-        return "Session started successfully!"
-    else:
-        return "Failed to start session!"
-    
-def send_synchronous_message(message):
 
+    try:
+        response = requests.post(
+            f"{AGENT_API_BASE_URL}/agents/{AGENT_ID}/sessions",
+            headers=headers,
+            json=session_payload
+        )
+        response.raise_for_status()
+        return response.json().get("sessionId")
+    except Exception as e:
+        print(f"Session error: {e}")
+        return None
+    
+def send_synchronous_message(access_token, session_id, message):
     headers = {
-        "Authorization": f"Bearer {global_access_token}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
@@ -82,46 +74,49 @@ def send_synchronous_message(message):
             "sequenceId": get_current_timestamp(),
             "type": "Text",
             "text": message
-          },
+        },
         "variables": []
     }
 
-    response = requests.post(f"{AGENT_API_BASE_URL}/sessions/{global_session_id}/messages", headers=headers, json=message_payload)
+    try:
+        response = requests.post(
+            f"{AGENT_API_BASE_URL}/sessions/{session_id}/messages",
+            headers=headers,
+            json=message_payload
+        )
+        response.raise_for_status()
+        return response.json()["messages"][0]["message"]
+    except Exception as e:
+        print(f"Message send error: {e}")
+        return "Sorry, I couldn’t reach the Agentforce backend."
 
-    if response.status_code == 200:
-      message_data = response.json();
-      return message_data["messages"][0]["message"]
-    else:
-      return "Failed to send synchronous message!"
-
-# def send_to_agentforce(user_message):
-#     url = f"{AGENTFORCE_API_BASE}/services/apexrest/agentforce/message"
-#     headers = {
-#         "Authorization": f"Bearer {ACCESS_TOKEN}",
-#         "Content-Type": "application/json"
-#     }
-#     payload = {
-#         "user_input": user_message
-#     }
-
-#     #try:
-#         #response = requests.post(url, json=payload, headers=headers, timeout=10)
-#         #response.raise_for_status()
-#         #return response.json().get("reply", "No reply from Agentforce.")
-#     #except Exception as e:
-#         #return f"Error communicating with Salesforce Agentforce: {e}"
-
+# Chainlit event: chat start
 @cl.on_chat_start
-def on_chat_start():
-    start_session()
-    print(start_session())
+async def on_chat_start():
+    access_token = authenticate()
+    session_id = start_session(access_token)
 
+    if not access_token or not session_id:
+        await cl.Message(content="Could not start session with Agentforce. Please check config.").send()
+        return
 
+    # Save to Chainlit user session state
+    cl.user_session.set("access_token", access_token)
+    cl.user_session.set("session_id", session_id)
+
+    await cl.Message(content="Connected to Agentforce. How can I help you today?").send()
+
+# Chainlit event: on message
 @cl.on_message
 async def handle_message(message: cl.Message):
+    access_token = cl.user_session.get("access_token")
+    session_id = cl.user_session.get("session_id")
+
+    if not access_token or not session_id:
+        await cl.Message(content="Session is not initialized. Please refresh the chat.").send()
+        return
+
     user_input = message.content
-    await cl.Message(author="User", content=user_input).send()
+    reply = send_synchronous_message(access_token, session_id, user_input)
 
-    bot_reply = send_synchronous_message(user_input)
-
-    await cl.Message(author="Agentforce", content=bot_reply).send()
+    await cl.Message(author="Agentforce", content=reply).send()
