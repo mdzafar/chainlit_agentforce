@@ -1,6 +1,6 @@
-# 💬 Agentforce Chat UI
+# Chainlit Agentforce Chat UI
 
-A simple Python-based chatbot UI using [Chainlit](https://www.chainlit.io/) that connects to Salesforce Agentforce using REST API.
+This is a simple Chainlit app [Chainlit](https://www.chainlit.io/) that connects a chat interface to Salesforce Agentforce using REST API.
 
 ## Features
 
