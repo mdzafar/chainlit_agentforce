@@ -9,18 +9,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-AGENTFORCE_API_BASE = os.getenv("AGENTFORCE_API_BASE")
-ACCESS_TOKEN = os.getenv("SALESFORCE_ACCESS_TOKEN")
+BASE_URL = os.getenv("BASE_URL")
+AGENT_API_BASE_URL = os.getenv("AGENT_API_BASE_URL")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+AGENT_ID = os.getenv("AGENT_ID")
+#USERNAME = os.getenv("USERNAME")
+#PASSWORD = os.getenv("PASSWORD")
 
 # Generate a random UUID
 def generate_random_uuid():
     return str(uuid.uuid4())
 
+def get_current_timestamp():
+    return int(time.time())
+
 def authenticate():
     payload = {
         'grant_type': 'client_credentials',
-        'client_id': userdata.get('CLIENT_ID'),
-        'client_secret': userdata.get('CLIENT_SECRET')
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET
+        #'username': USERNAME,
+        #'password': PASSWORD
     }
     response = requests.post(f"{BASE_URL}/services/oauth2/token", data=payload)
     if response.status_code == 200:
@@ -50,9 +60,9 @@ def start_session():
         "streamingCapabilities": {
             "chunkTypes": ["Text"]
         },
-        "bypassUser": 'true'
+        "bypassUser": 'false'
     }
-    response = requests.post(f"{AGENT_API_BASE_URL}/agents/{userdata.get('AGENT_ID')}/sessions", headers=headers, json=session_payload)
+    response = requests.post(f"{AGENT_API_BASE_URL}/agents/{AGENT_ID}/sessions", headers=headers, json=session_payload)
     if response.status_code == 200:
         session_id = response.json().get("sessionId")
         global_session_id = session_id;
@@ -84,28 +94,34 @@ def send_synchronous_message(message):
     else:
       return "Failed to send synchronous message!"
 
-def send_to_agentforce(user_message):
-    url = f"{AGENTFORCE_API_BASE}/services/apexrest/agentforce/message"
-    headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "user_input": user_message
-    }
+# def send_to_agentforce(user_message):
+#     url = f"{AGENTFORCE_API_BASE}/services/apexrest/agentforce/message"
+#     headers = {
+#         "Authorization": f"Bearer {ACCESS_TOKEN}",
+#         "Content-Type": "application/json"
+#     }
+#     payload = {
+#         "user_input": user_message
+#     }
 
-    #try:
-        #response = requests.post(url, json=payload, headers=headers, timeout=10)
-        #response.raise_for_status()
-        #return response.json().get("reply", "No reply from Agentforce.")
-    #except Exception as e:
-        #return f"Error communicating with Salesforce Agentforce: {e}"
+#     #try:
+#         #response = requests.post(url, json=payload, headers=headers, timeout=10)
+#         #response.raise_for_status()
+#         #return response.json().get("reply", "No reply from Agentforce.")
+#     #except Exception as e:
+#         #return f"Error communicating with Salesforce Agentforce: {e}"
+
+@cl.on_chat_start
+def on_chat_start():
+    start_session()
+    print(start_session())
+
 
 @cl.on_message
 async def handle_message(message: cl.Message):
     user_input = message.content
     await cl.Message(author="User", content=user_input).send()
 
-    bot_reply = send_to_agentforce(user_input)
+    bot_reply = send_synchronous_message(user_input)
 
     await cl.Message(author="Agentforce", content=bot_reply).send()
