@@ -1,6 +1,6 @@
 # Chainlit Agentforce Chat UI
 
-This is a simple Chainlit app [Chainlit](https://www.chainlit.io/) that connects a chat interface to Salesforce Agentforce using REST API.
+This is a simple [Chainlit](https://www.chainlit.io/) app that connects a chat interface to Salesforce Agentforce using REST API.
 
 ## Features
 
