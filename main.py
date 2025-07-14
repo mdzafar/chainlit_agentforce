@@ -1,12 +1,88 @@
 import os
-import chainlit as cl
+import uuid
+import datetime
+import time
+import json
 import requests
+import chainlit as cl
 from dotenv import load_dotenv
 
 load_dotenv()
 
 AGENTFORCE_API_BASE = os.getenv("AGENTFORCE_API_BASE")
 ACCESS_TOKEN = os.getenv("SALESFORCE_ACCESS_TOKEN")
+
+# Generate a random UUID
+def generate_random_uuid():
+    return str(uuid.uuid4())
+
+def authenticate():
+    payload = {
+        'grant_type': 'client_credentials',
+        'client_id': userdata.get('CLIENT_ID'),
+        'client_secret': userdata.get('CLIENT_SECRET')
+    }
+    response = requests.post(f"{BASE_URL}/services/oauth2/token", data=payload)
+    if response.status_code == 200:
+        access_token = response.json().get("access_token")
+        return access_token
+    else:
+        return None
+    
+def start_session():
+    global global_session_id, global_access_token
+    access_token = authenticate();
+    if not access_token:
+        return "Authentication failed!"
+
+    global_access_token = access_token;
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    session_payload = {
+        "externalSessionKey": generate_random_uuid(),
+        "instanceConfig": {
+            "endpoint": BASE_URL
+        },
+        "variables": [],
+        "streamingCapabilities": {
+            "chunkTypes": ["Text"]
+        },
+        "bypassUser": 'true'
+    }
+    response = requests.post(f"{AGENT_API_BASE_URL}/agents/{userdata.get('AGENT_ID')}/sessions", headers=headers, json=session_payload)
+    if response.status_code == 200:
+        session_id = response.json().get("sessionId")
+        global_session_id = session_id;
+        return "Session started successfully!"
+    else:
+        return "Failed to start session!"
+    
+def send_synchronous_message(message):
+
+    headers = {
+        "Authorization": f"Bearer {global_access_token}",
+        "Content-Type": "application/json"
+    }
+
+    message_payload = {
+        "message": {
+            "sequenceId": get_current_timestamp(),
+            "type": "Text",
+            "text": message
+          },
+        "variables": []
+    }
+
+    response = requests.post(f"{AGENT_API_BASE_URL}/sessions/{global_session_id}/messages", headers=headers, json=message_payload)
+
+    if response.status_code == 200:
+      message_data = response.json();
+      return message_data["messages"][0]["message"]
+    else:
+      return "Failed to send synchronous message!"
 
 def send_to_agentforce(user_message):
     url = f"{AGENTFORCE_API_BASE}/services/apexrest/agentforce/message"
