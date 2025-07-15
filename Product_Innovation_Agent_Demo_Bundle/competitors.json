@@ -1,0 +1,38 @@
+[
+  {
+    "brand": "ChillPop",
+    "flavor": "Tamarind Tango",
+    "market_share_percent": 7.5,
+    "seasonal_sales_rank": "Top 5 in Summer 2024",
+    "flavor_type": "Fusion",
+    "launch_date": "2023-04-10",
+    "consumer_rating": 4.4
+  },
+  {
+    "brand": "UrbanChill",
+    "flavor": "Lychee Salt Bliss",
+    "market_share_percent": 3.1,
+    "seasonal_sales_rank": "Top 10 in Metro Markets",
+    "flavor_type": "Vegan",
+    "launch_date": "2023-05-01",
+    "consumer_rating": 4.0
+  },
+  {
+    "brand": "FrostX",
+    "flavor": "Kesar Pistachio Crunch",
+    "market_share_percent": 5.8,
+    "seasonal_sales_rank": "Top 7 All India",
+    "flavor_type": "Traditional",
+    "launch_date": "2022-11-15",
+    "consumer_rating": 4.3
+  },
+  {
+    "brand": "SwirlBites",
+    "flavor": "Matcha Vanilla Dream",
+    "market_share_percent": 2.5,
+    "seasonal_sales_rank": "Seasonal Bestseller (Winter)",
+    "flavor_type": "Global Trend",
+    "launch_date": "2023-01-10",
+    "consumer_rating": 3.9
+  }
+]

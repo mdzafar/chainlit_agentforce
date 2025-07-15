@@ -1,0 +1,24 @@
+[
+  {
+    "name": "E110",
+    "alias": "Sunset Yellow",
+    "banned_in": [
+      "EU"
+    ],
+    "reason": "Linked to allergic reactions",
+    "alternatives": [
+      "Beetroot Extract"
+    ]
+  },
+  {
+    "name": "Titanium Dioxide",
+    "alias": "Color Additive",
+    "banned_in": [
+      "India"
+    ],
+    "reason": "Possible carcinogen",
+    "alternatives": [
+      "Silica-free coloring agents"
+    ]
+  }
+]
