@@ -22,7 +22,7 @@ cd chainlit_agentforce
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate || . .\.venv\Scripts\Activate.ps1 (windows powershell)
 ```
 
 ### 3. Install dependencies
